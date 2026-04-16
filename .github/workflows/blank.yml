@@ -1,0 +1,77 @@
+name: Convert Markdown to PDF
+
+# Trigger when markdown files are pushed
+on:
+  push:
+    paths:
+      - '*.md'
+      - 'docs/**/*.md'
+  pull_request:
+    paths:
+      - '*.md'
+      - 'docs/**/*.md'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Checkout the repo
+      - uses: actions/checkout@v4
+      
+      # 2. Install pandoc
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+          pandoc --version
+      
+      # 3. Install latex for better PDF generation (optional but recommended)
+      - name: Install LaTeX
+        run: |
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra
+      
+      # 4. Convert markdown files to PDF
+      - name: Convert Markdown to PDF
+        run: |
+          # Convert main report
+          pandoc SECURITY_AUDIT_REPORT.md \
+            -o SECURITY_AUDIT_REPORT.pdf \
+            --variable geometry:margin=1in \
+            --toc \
+            --toc-depth=2 \
+            --highlight-style=pygments \
+            --pdf-engine=xelatex \
+            -V geometry:paper=letter
+          
+          # List generated files
+          ls -lh *.pdf
+      
+      # 5. Upload PDF as artifact
+      - name: Upload PDF to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: "*.pdf"
+          retention-days: 90
+      
+      # 6. Create Release with PDF (optional)
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.pdf"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # 7. Commit PDF back to repo (optional)
+      - name: Commit PDF to Repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add "*.pdf"
+          git commit -m "Auto-generated PDFs from markdown" || true
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
