@@ -1,4 +1,3 @@
-cat > .github/workflows/convert-to-pdf.yml << 'EOF'
 name: Convert Markdown to PDF
 on:
   workflow_dispatch:
@@ -21,4 +20,3 @@ jobs:
         with:
           name: security-report
           path: Report.pdf
-EOF
