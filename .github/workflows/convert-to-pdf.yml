@@ -1,31 +1,24 @@
 cat > .github/workflows/convert-to-pdf.yml << 'EOF'
 name: Convert Markdown to PDF
-
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-
 jobs:
   convert:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Install Pandoc and LaTeX
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended
-
       - name: Convert Report.md to PDF
-        run: |
-          pandoc Report.md -o Report.pdf --toc --number-sections --pdf-engine=xelatex -V geometry:margin=1in
-
+        run: pandoc Report.md -o Report.pdf --toc --number-sections --pdf-engine=xelatex -V geometry:margin=1in
       - name: Upload PDF Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: security-report
           path: Report.pdf
-
 EOF
